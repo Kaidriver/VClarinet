@@ -10,6 +10,9 @@ import android.media.AudioManager;
 import ketai.ui.*;
 //TODO
 //EDIT UI: DIVIDE BOTTON 4 KEYS INTO TWO GROUPS OR SHIFT TO THE RIGHT TO ALLOW BETTER REGISTERING SLIDE BOTTOM HALF OF BUTTONS DOWN
+import ketai.sensors.*;
+KetaiAudioInput mic;
+short[] data;
 
 KetaiGesture gesture;
 SoundPool soundPool;
@@ -52,6 +55,10 @@ int pastID;
 boolean backkey2 = false;
 boolean octavekey2 = false;
 public void setup() {
+  
+  orientation(PORTRAIT);
+  mic = new KetaiAudioInput(this);
+  
   //creates all the keys
   ellipseMode(CENTER);
   btn1 = new keys (displayHeight/12*1.8, displayWidth/2, 1);
@@ -190,6 +197,9 @@ public void setup() {
 public void draw() {
   //Draws the gui, then checks for which key pressed
   background(255);
+  if (!mic.isActive()) {
+    mic.start();
+  }
   displayGUI();
   play();
  
@@ -247,10 +257,35 @@ void displayGUI() {
 
 void playSound(int soundID) { 
   //Plays sound if not the same sound (prevent repeats)
-  if (pastID != soundID) {
-    soundPool.stop(streamId);
-    streamId = soundPool.play(soundID, 1.0f, 1.0f, 1, -1, 1f);
-    pastID = soundID;
+    /*
+  boolean play = true;
+  int counter = 0;
+  if (data != null) {
+    for (int i = 0; i < data.length; i++) {
+      if(i != data.length-1) {
+        if (data[i] <= 50) {
+          counter++;
+        }
+      }
+           
+    }
+    System.out.println(counter);
+    if (counter > 900) {
+      play = false;
+    }
+    */
+  if (data != null) {
+    System.out.println(abs(data[0]));
+    if (abs(data[0]) >= 1700) {
+      if (pastID != soundID) {
+        soundPool.stop(streamId);
+        streamId = soundPool.play(soundID, 1.0f, 1.0f, 1, -1, 1f);
+        pastID = soundID;
+      }
+    } else {
+      soundPool.stop(streamId);
+      pastID = -1;
+    }
   }
 }
 /*
@@ -511,4 +546,9 @@ public void play() {
     playSound(16);
     display = "Mid G";
   }
+}
+
+void onAudioEvent(short[] _data)
+{
+  data= _data;
 }
